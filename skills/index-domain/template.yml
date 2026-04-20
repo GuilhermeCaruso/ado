@@ -1,0 +1,314 @@
+context:
+    domain:
+        name: domain-name
+        description: >
+            Describe what this domain represents in the product. Explain the problem it solves,
+            who the affected users are, and what business value it delivers. This field is read by
+            AI agents to understand context before any technical task.
+        business_area: area-name
+        slack_channel: "#channel-name"
+        docs:
+            overview: github.com/org/repo/blob/main/docs/DOMAIN_OVERVIEW.md
+            ai_context: github.com/org/repo/blob/main/docs/AI_CONTEXT.md
+            architecture: github.com/org/repo/blob/main/docs/ARCHITECTURE.md
+
+    team:
+        name: team-name
+        mission: >
+            Describe in one sentence the team's mission — what it exists to do and what impact is expected.
+        members:
+            - name: Full Name
+              role: tech_lead
+              github: github_username
+              slack: "@slack_username"
+            - name: Full Name
+              role: senior_engineer
+              github: github_username
+              slack: "@slack_username"
+            - name: Full Name
+              role: engineer
+              github: github_username
+              slack: "@slack_username"
+            - name: Full Name
+              role: product_manager
+              github: github_username
+              slack: "@slack_username"
+
+    service_index:
+        - service: service_a
+          description: One line describing the role of this service in the domain.
+        - service: service_b
+          description: One line describing the role of this service in the domain.
+        - service: service_c
+          description: One line describing the role of this service in the domain.
+
+data:
+    stores:
+        mongodb_service_a:
+            type: mongodb
+            description: Primary database for service_a. Stores domain entities and their states.
+            used_by:
+                - service: service_a
+                  access: read_write
+            collections:
+                - name: entities
+                  description: Main domain records managed by service_a.
+                  fields:
+                      id: uuid
+                      external_id: string
+                      status: string
+                      amount: float
+                      metadata: object
+                      created_at: datetime
+                      updated_at: datetime
+                - name: simulations
+                  description: Simulation records created before contracting.
+                  fields:
+                      id: uuid
+                      entity_id: uuid
+                      options: array
+                      expires_at: datetime
+                      created_at: datetime
+
+        mongodb_service_b:
+            type: mongodb
+            description: Primary database for service_b.
+            used_by:
+                - service: service_b
+                  access: read_write
+            collections:
+                - name: other_entities
+                  description: Entities managed by service_b.
+                  fields:
+                      id: uuid
+                      reference_id: string
+                      status: string
+                      created_at: datetime
+
+        redis_cache:
+            type: redis
+            description: Shared cache between services for high-read, low-latency data.
+            key_prefix: "DOMAIN:SERVICE:"
+            ttl_seconds: 3600
+            used_by:
+                - service: service_a
+                  access: read_write
+                - service: service_b
+                  access: read_only
+
+    topics:
+        domain.entity.action:
+            description: Published when a domain entity changes state. Used by consumers to react to status transitions without polling.
+            producer: service_a
+            consumers:
+                - service_b
+            payload:
+                id: uuid
+                external_id: string
+                status: string
+                timestamp: datetime
+                metadata: object
+
+        domain.other_entity.action:
+            description: Published by service_b after processing a received event. Indicates completion of an async operation.
+            producer: service_b
+            consumers:
+                - service_a
+            payload:
+                id: uuid
+                reference_id: string
+                result: string
+                timestamp: datetime
+
+services:
+    service_a:
+        ownership_type: owner
+        status: active
+        criticality: high
+        tech_stack:
+            language: go
+            framework: fiber
+        url: github.com/org/repo-service-a
+        docs:
+            readme: github.com/org/repo-service-a/blob/main/README.md
+            ai_context: github.com/org/repo-service-a/blob/main/docs/AI_CONTEXT.md
+        description: Describe what this service does, its responsibility in the domain and its main interactions.
+        routes:
+            - id: 00000000-0000-0000-0000-000000000001
+              path: /v1/resource
+              method: GET
+              description: Describe what this endpoint does, what it returns and when it should be used.
+              headers:
+                - authorization: string
+              stores:
+                - store: mongodb_service_a
+                  collection: entities
+                  access: read
+            - id: 00000000-0000-0000-0000-000000000002
+              path: /v1/resource/{id}
+              method: GET
+              description: Describe what this endpoint does, what it returns and when it should be used.
+              headers:
+                - authorization: string
+              params:
+                - id: uuid
+              stores:
+                - store: mongodb_service_a
+                  collection: entities
+                  access: read
+                - store: redis_cache
+                  access: read
+            - id: 00000000-0000-0000-0000-000000000003
+              path: /v1/resource
+              method: POST
+              description: Describe what this endpoint does, what it returns and when it should be used.
+              headers:
+                - authorization: string
+              body:
+                field_a: string
+                field_b: uuid
+                field_c: float
+              stores:
+                - store: mongodb_service_a
+                  collection: entities
+                  access: write
+                - store: redis_cache
+                  access: write
+        dependencies:
+            - service: service_b
+              routes:
+                - 00000000-0000-0000-0000-000000000010
+        callers:
+        events:
+            published:
+                - name: domain.entity.action
+                  description: Describe when this event is published and what it represents for consumers.
+                  consumers:
+                      - service_b
+            subscribed:
+                - service: service_b
+                  events:
+                      - domain.other_entity.action
+                  stores:
+                      - store: mongodb_service_a
+                        collection: entities
+                        access: read_write
+
+    service_b:
+        ownership_type: owner
+        status: active
+        criticality: medium
+        tech_stack:
+            language: go
+            framework: fiber
+        url: github.com/org/repo-service-b
+        docs:
+            readme: github.com/org/repo-service-b/blob/main/README.md
+            ai_context: github.com/org/repo-service-b/blob/main/docs/AI_CONTEXT.md
+        description: Describe what this service does, its responsibility in the domain and its main interactions.
+        routes:
+            - id: 00000000-0000-0000-0000-000000000010
+              path: /v1/other-resource
+              method: POST
+              description: Describe what this endpoint does, what it returns and when it should be used.
+              headers:
+                - authorization: string
+              body:
+                field_a: string
+                field_b: float
+              stores:
+                - store: mongodb_service_b
+                  collection: other_entities
+                  access: write
+            - id: 00000000-0000-0000-0000-000000000011
+              path: /v1/other-resource/{id}/status
+              method: GET
+              description: Describe what this endpoint does, what it returns and when it should be used.
+              headers:
+                - authorization: string
+              params:
+                - id: uuid
+              stores:
+                - store: mongodb_service_b
+                  collection: other_entities
+                  access: read
+        dependencies:
+        callers:
+            - service: service_a
+              routes:
+                - 00000000-0000-0000-0000-000000000010
+        events:
+            published:
+                - name: domain.other_entity.action
+                  description: Describe when this event is published and what it represents for consumers.
+                  consumers:
+                      - service_a
+            subscribed:
+                - service: service_a
+                  events:
+                      - domain.entity.action
+                  stores:
+                      - store: mongodb_service_b
+                        collection: other_entities
+                        access: read_write
+
+    internal_service:
+        ownership_type: internal
+        status: active
+        criticality: medium
+        tech_stack:
+            language: go
+            framework: fiber
+        url: github.com/org/repo-internal-service
+        docs:
+            readme: github.com/org/repo-internal-service/blob/main/README.md
+            ai_context: github.com/org/repo-internal-service/blob/main/docs/AI_CONTEXT.md
+        description: Describe the role of this service from another internal team. Explain what it provides, which team maintains it and how your domain consumes it.
+        routes:
+            - id: 00000000-0000-0000-0000-000000000030
+              path: /v1/internal-resource
+              method: GET
+              description: Describe what this endpoint does and how it is used by the domain.
+              headers:
+                - authorization: string
+              params:
+                - id: uuid
+        dependencies:
+        callers:
+            - service: service_a
+              routes:
+                - 00000000-0000-0000-0000-000000000030
+        events:
+            published:
+            subscribed:
+
+    partner_service:
+        ownership_type: partner
+        status: active
+        criticality: critical
+        tech_stack:
+            language: unknown
+            framework: unknown
+        url: github.com/partner-org/partner-repo
+        docs:
+            readme: github.com/partner-org/partner-repo/blob/main/README.md
+            ai_context: github.com/partner-org/partner-repo/blob/main/docs/AI_CONTEXT.md
+        description: Describe the role of this external partner service, what it provides and how it is used by the domain.
+        routes:
+            - id: 00000000-0000-0000-0000-000000000020
+              path: /v1/partner-resource
+              method: POST
+              description: Describe what this partner endpoint does and how it is integrated.
+              headers:
+                - api-client-key: string
+              body:
+                document_number: string
+                amount: float
+        dependencies:
+        callers:
+            - service: service_a
+              routes:
+                - 00000000-0000-0000-0000-000000000020
+        events:
+            published:
+            subscribed:

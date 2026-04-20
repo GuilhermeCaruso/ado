@@ -1,0 +1,102 @@
+# Example: order-service self-declaration (part of ecommerce domain)
+# This file lives at the root of the order-service repository.
+# index-domain reads this file when building the ecommerce domain index.
+
+ado_version: v1
+service: order-service
+domain: ecommerce
+generated_at: 2026-04-20
+
+ownership_type: owner
+status: active
+criticality: critical
+description: >
+    Manages the full order lifecycle: creation, payment authorization, confirmation, and status tracking.
+    Coordinates with catalog-service to validate availability before accepting an order,
+    and with payment-gateway to process payments.
+    Emits events for every status transition so downstream services react without polling.
+
+tech_stack:
+    language: go
+    framework: fiber
+
+url: github.com/example-org/order-service
+docs:
+    readme: github.com/example-org/order-service/blob/main/README.md
+    ai_context: github.com/example-org/order-service/blob/main/docs/AI_CONTEXT.md
+
+routes:
+    - id: a1b2c3d4-0001-0000-0000-000000000001
+      path: /v1/orders
+      method: POST
+      description: >
+          Creates a new order. Validates product availability via catalog-service,
+          charges the customer via payment-gateway, and persists the order.
+      headers:
+        - authorization: string
+        - x-customer-id: uuid
+      body:
+        items:
+            - product_id: uuid
+              quantity: integer
+        payment_method: string
+        payment_token: string
+      stores:
+        - store: mongodb_orders
+          collection: orders
+          access: write
+        - store: mongodb_orders
+          collection: order_items
+          access: write
+
+    - id: a1b2c3d4-0002-0000-0000-000000000001
+      path: /v1/orders/{id}
+      method: GET
+      description: Returns a single order by ID including all line items and current status.
+      headers:
+        - authorization: string
+      params:
+        - id: uuid
+      stores:
+        - store: mongodb_orders
+          collection: orders
+          access: read
+        - store: mongodb_orders
+          collection: order_items
+          access: read
+
+    - id: a1b2c3d4-0003-0000-0000-000000000001
+      path: /v1/orders
+      method: GET
+      description: Lists orders for the authenticated customer with optional status filter and pagination.
+      headers:
+        - authorization: string
+        - x-customer-id: uuid
+      params:
+        - status: string
+        - page: integer
+        - limit: integer
+      stores:
+        - store: mongodb_orders
+          collection: orders
+          access: read
+
+dependencies:
+    - service: catalog-service
+      routes:
+        - b2c3d4e5-0001-0000-0000-000000000002
+    - service: payment-gateway
+      routes:
+        - d4e5f6a7-0001-0000-0000-000000000004
+
+events:
+    published:
+        - name: ecommerce.order.placed
+          description: Emitted immediately after a successful order creation.
+          consumers:
+              - notification-service
+        - name: ecommerce.order.status_changed
+          description: Emitted on every order status transition.
+          consumers:
+              - notification-service
+    subscribed:

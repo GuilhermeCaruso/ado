@@ -1,0 +1,77 @@
+# ado.yaml — ADO index-service template
+# Place this file at the root of your service repository.
+# Fill in each field as described. Fields marked TODO require manual review.
+# This file is read by AI agents and by the index-domain skill when building domain indexes.
+
+ado_version: v1
+service: service-name           # must match how this service is referenced by other services
+domain: domain-name             # domain this service belongs to
+generated_at: YYYY-MM-DD        # update when regenerating
+
+ownership_type: owner           # owner | internal | partner
+status: active                  # active | deprecated | maintenance
+criticality: high               # critical | high | medium | low
+description: >
+    Describe what this service does, its responsibility in the domain,
+    and its main interactions with other services.
+    This is read by AI agents before any technical task — be precise.
+
+tech_stack:
+    language: go                # go | python | typescript | java | ...
+    framework: fiber            # fiber | fastapi | nestjs | spring | ...
+
+url: github.com/org/repo
+docs:
+    readme: github.com/org/repo/blob/main/README.md
+    ai_context: github.com/org/repo/blob/main/docs/AI_CONTEXT.md
+
+routes:
+    - id: 00000000-0000-0000-0000-000000000001   # stable v4 UUID — never change after assignment
+      path: /v1/resource
+      method: GET                                 # GET | POST | PUT | PATCH | DELETE
+      description: Describe what this endpoint does, what it returns and when to use it.
+      headers:
+        - authorization: string
+      stores:
+        - store: store-name
+          collection: collection-name
+          access: read                            # read | write | read_write
+
+    - id: 00000000-0000-0000-0000-000000000002
+      path: /v1/resource
+      method: POST
+      description: Describe what this endpoint does, what it returns and when to use it.
+      headers:
+        - authorization: string
+      body:
+        field_a: string
+        field_b: uuid
+        field_c: float
+      stores:
+        - store: store-name
+          collection: collection-name
+          access: write
+
+dependencies:
+    - service: other-service-name
+      routes:
+        - 00000000-0000-0000-0000-000000000010   # UUID of the route in the target service
+                                                  # use TODO if the target's UUID is unknown
+
+# callers are omitted here — they are derived by index-domain during cross-service resolution
+
+events:
+    published:
+        - name: domain.entity.action
+          description: Describe when this event is published and what it means for consumers.
+          consumers:
+              - consumer-service-name
+
+    subscribed:
+        - service: producer-service-name
+          events:
+              - domain.other_entity.action
+          stores:
+              - store: store-name
+                collection: collection-name
+                access: read_write

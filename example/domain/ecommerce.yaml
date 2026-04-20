@@ -1,0 +1,374 @@
+context:
+    domain:
+        name: ecommerce
+        description: >
+            Core ecommerce domain responsible for managing the full purchase lifecycle —
+            from product discovery through order placement and payment processing.
+            Serves end customers via web and mobile storefronts and internal operations teams.
+        business_area: commerce
+        slack_channel: "#ecommerce-team"
+        docs:
+            overview: github.com/example-org/ecommerce/blob/main/docs/DOMAIN_OVERVIEW.md
+            ai_context: github.com/example-org/ecommerce/blob/main/docs/AI_CONTEXT.md
+            architecture: github.com/example-org/ecommerce/blob/main/docs/ARCHITECTURE.md
+
+    team:
+        name: ecommerce-core
+        mission: >
+            Own the end-to-end purchase experience, from catalog browsing to payment confirmation,
+            ensuring reliability and performance at scale.
+        members:
+            - name: Alice Johnson
+              role: tech_lead
+              github: alicejohnson
+              slack: "@alice"
+            - name: Bob Smith
+              role: senior_engineer
+              github: bobsmith
+              slack: "@bob"
+            - name: Carol White
+              role: engineer
+              github: carolwhite
+              slack: "@carol"
+            - name: Dan Brown
+              role: product_manager
+              github: danbrown
+              slack: "@dan"
+
+    service_index:
+        - service: order-service
+          description: Manages the full order lifecycle from creation to fulfillment.
+        - service: catalog-service
+          description: Serves product listings, search, and inventory availability.
+        - service: notification-service
+          description: Internal service that sends transactional emails and SMS.
+        - service: payment-gateway
+          description: External partner API for processing credit card and digital wallet payments.
+
+data:
+    stores:
+        mongodb_orders:
+            type: mongodb
+            description: Primary database for order-service. Stores orders and their lifecycle states.
+            used_by:
+                - service: order-service
+                  access: read_write
+            collections:
+                - name: orders
+                  description: All orders placed by customers, including status history.
+                  fields:
+                      id: uuid
+                      customer_id: uuid
+                      items: array
+                      total_amount: float
+                      currency: string
+                      status: string
+                      payment_ref: string
+                      created_at: datetime
+                      updated_at: datetime
+                - name: order_items
+                  description: Individual line items within an order.
+                  fields:
+                      id: uuid
+                      order_id: uuid
+                      product_id: uuid
+                      quantity: integer
+                      unit_price: float
+
+        mongodb_catalog:
+            type: mongodb
+            description: Product catalog database. Stores product definitions and inventory counts.
+            used_by:
+                - service: catalog-service
+                  access: read_write
+            collections:
+                - name: products
+                  description: Product definitions including pricing and metadata.
+                  fields:
+                      id: uuid
+                      sku: string
+                      name: string
+                      description: string
+                      price: float
+                      currency: string
+                      category: string
+                      active: boolean
+                      created_at: datetime
+                - name: inventory
+                  description: Stock levels per product.
+                  fields:
+                      product_id: uuid
+                      quantity_available: integer
+                      reserved: integer
+                      updated_at: datetime
+
+        redis_catalog_cache:
+            type: redis
+            description: Cache layer for catalog-service. Reduces database load for high-frequency product reads.
+            key_prefix: "CATALOG:PRODUCT:"
+            ttl_seconds: 300
+            used_by:
+                - service: catalog-service
+                  access: read_write
+                - service: order-service
+                  access: read_only
+
+    topics:
+        ecommerce.order.placed:
+            description: >
+                Published when a customer successfully places an order.
+                Consumed by notification-service to trigger confirmation emails.
+            producer: order-service
+            consumers:
+                - notification-service
+            payload:
+                order_id: uuid
+                customer_id: uuid
+                customer_email: string
+                total_amount: float
+                currency: string
+                items: array
+                timestamp: datetime
+
+        ecommerce.order.status_changed:
+            description: >
+                Published when an order transitions to a new status (e.g. confirmed, shipped, delivered).
+                Consumed by notification-service to send status update communications.
+            producer: order-service
+            consumers:
+                - notification-service
+            payload:
+                order_id: uuid
+                customer_id: uuid
+                customer_email: string
+                previous_status: string
+                new_status: string
+                timestamp: datetime
+
+services:
+    order-service:
+        ownership_type: owner
+        status: active
+        criticality: critical
+        description: >
+            Manages the full order lifecycle: creation, payment authorization, confirmation, and status tracking.
+            Coordinates with catalog-service to validate availability before accepting an order,
+            and with payment-gateway to process payments. Emits events for every status transition.
+        tech_stack:
+            language: go
+            framework: fiber
+        url: github.com/example-org/order-service
+        docs:
+            readme: github.com/example-org/order-service/blob/main/README.md
+            ai_context: github.com/example-org/order-service/blob/main/docs/AI_CONTEXT.md
+        routes:
+            - id: a1b2c3d4-0001-0000-0000-000000000001
+              path: /v1/orders
+              method: POST
+              description: >
+                Creates a new order. Validates product availability via catalog-service,
+                charges the customer via payment-gateway, and persists the order.
+              headers:
+                - authorization: string
+                - x-customer-id: uuid
+              body:
+                items:
+                    - product_id: uuid
+                      quantity: integer
+                payment_method: string
+                payment_token: string
+              stores:
+                - store: mongodb_orders
+                  collection: orders
+                  access: write
+                - store: mongodb_orders
+                  collection: order_items
+                  access: write
+
+            - id: a1b2c3d4-0002-0000-0000-000000000001
+              path: /v1/orders/{id}
+              method: GET
+              description: Returns a single order by ID including all line items and current status.
+              headers:
+                - authorization: string
+              params:
+                - id: uuid
+              stores:
+                - store: mongodb_orders
+                  collection: orders
+                  access: read
+                - store: mongodb_orders
+                  collection: order_items
+                  access: read
+
+            - id: a1b2c3d4-0003-0000-0000-000000000001
+              path: /v1/orders
+              method: GET
+              description: Lists orders for the authenticated customer with optional status filter and pagination.
+              headers:
+                - authorization: string
+                - x-customer-id: uuid
+              params:
+                - status: string
+                - page: integer
+                - limit: integer
+              stores:
+                - store: mongodb_orders
+                  collection: orders
+                  access: read
+
+        dependencies:
+            - service: catalog-service
+              routes:
+                - b2c3d4e5-0001-0000-0000-000000000002
+            - service: payment-gateway
+              routes:
+                - d4e5f6a7-0001-0000-0000-000000000004
+        callers:
+        events:
+            published:
+                - name: ecommerce.order.placed
+                  description: Emitted immediately after a successful order creation.
+                  consumers:
+                      - notification-service
+                - name: ecommerce.order.status_changed
+                  description: Emitted on every order status transition.
+                  consumers:
+                      - notification-service
+            subscribed:
+
+    catalog-service:
+        ownership_type: owner
+        status: active
+        criticality: high
+        description: >
+            Serves the product catalog: listings, search, and real-time inventory availability.
+            Acts as the source of truth for product data. Caches frequently accessed products in Redis
+            to handle high read throughput from storefronts and other services.
+        tech_stack:
+            language: go
+            framework: fiber
+        url: github.com/example-org/catalog-service
+        docs:
+            readme: github.com/example-org/catalog-service/blob/main/README.md
+            ai_context: github.com/example-org/catalog-service/blob/main/docs/AI_CONTEXT.md
+        routes:
+            - id: b2c3d4e5-0001-0000-0000-000000000002
+              path: /v1/products/{id}/availability
+              method: GET
+              description: >
+                Returns current stock availability for a product. Used by order-service before
+                accepting an order to prevent overselling.
+              headers:
+                - authorization: string
+              params:
+                - id: uuid
+              stores:
+                - store: mongodb_catalog
+                  collection: inventory
+                  access: read
+                - store: redis_catalog_cache
+                  access: read
+
+            - id: b2c3d4e5-0002-0000-0000-000000000002
+              path: /v1/products
+              method: GET
+              description: Lists active products with optional category filter, search query, and pagination.
+              headers:
+                - authorization: string
+              params:
+                - category: string
+                - q: string
+                - page: integer
+                - limit: integer
+              stores:
+                - store: mongodb_catalog
+                  collection: products
+                  access: read
+                - store: redis_catalog_cache
+                  access: read_write
+
+            - id: b2c3d4e5-0003-0000-0000-000000000002
+              path: /v1/products/{id}
+              method: GET
+              description: Returns full product details including pricing and current stock level.
+              headers:
+                - authorization: string
+              params:
+                - id: uuid
+              stores:
+                - store: mongodb_catalog
+                  collection: products
+                  access: read
+                - store: redis_catalog_cache
+                  access: read_write
+
+        dependencies:
+        callers:
+            - service: order-service
+              routes:
+                - b2c3d4e5-0001-0000-0000-000000000002
+        events:
+            published:
+            subscribed:
+
+    notification-service:
+        ownership_type: internal
+        status: active
+        criticality: medium
+        description: >
+            Internal shared service maintained by the platform team.
+            Sends transactional emails and SMS messages on behalf of any domain.
+            Consumed by order-service via async events — no direct HTTP calls.
+        tech_stack:
+            language: go
+            framework: fiber
+        url: github.com/example-org/notification-service
+        docs:
+            readme: github.com/example-org/notification-service/blob/main/README.md
+            ai_context: github.com/example-org/notification-service/blob/main/docs/AI_CONTEXT.md
+        routes:
+        dependencies:
+        callers:
+        events:
+            published:
+            subscribed:
+                - service: order-service
+                  events:
+                      - ecommerce.order.placed
+                      - ecommerce.order.status_changed
+
+    payment-gateway:
+        ownership_type: partner
+        status: active
+        criticality: critical
+        description: >
+            External partner API for payment processing. Handles credit card authorization,
+            digital wallet charges, and refunds. Integrated exclusively by order-service.
+        tech_stack:
+            language: unknown
+            framework: unknown
+        url: TODO
+        docs:
+            readme: TODO
+            ai_context: TODO
+        routes:
+            - id: d4e5f6a7-0001-0000-0000-000000000004
+              path: /v1/charges
+              method: POST
+              description: Initiates a payment charge given a tokenized payment method and amount.
+              headers:
+                - api-key: string
+              body:
+                amount: float
+                currency: string
+                payment_token: string
+                idempotency_key: uuid
+        dependencies:
+        callers:
+            - service: order-service
+              routes:
+                - d4e5f6a7-0001-0000-0000-000000000004
+        events:
+            published:
+            subscribed:
