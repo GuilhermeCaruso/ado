@@ -1,0 +1,50 @@
+---
+title: ecommerce · ecommerce-core
+---
+
+flowchart TD
+
+    %% domain: ecommerce | area: commerce | slack: #ecommerce-team
+    %% team: ecommerce-core | Alice Johnson (tech_lead), Dan Brown (product_manager)
+
+    subgraph owned[" Owned Services "]
+        direction TB
+        catalog_service["⚙️ catalog-service\n<i>Serves the product catalog: listings, se...</i>"]:::owner
+        order_service["⚙️ order-service\n<i>Manages the full order lifecycle: creati...</i>"]:::owner
+    end
+
+    subgraph internal_svcs[" Internal Services "]
+        direction TB
+        notification_service[/"🏢 notification-service\n<i>Internal shared service maintained by th...</i>"/]:::internal
+    end
+
+    subgraph partners[" Partners "]
+        direction TB
+        payment_gateway(["🤝 payment-gateway\n<i>External partner API for payment process...</i>"]):::partner
+    end
+
+    subgraph stores[" Data Stores "]
+        direction LR
+        mongodb_catalog_store[("🗄️ mongodb_catalog")]:::store
+        mongodb_orders_store[("🗄️ mongodb_orders")]:::store
+        redis_catalog_cache_store[("⚡ redis_catalog_cache")]:::store
+    end
+
+    %% http calls
+    order_service -->|"GET /v1/products/{id}/availability"| catalog_service
+    order_service -->|"POST /v1/charges"| payment_gateway
+
+    %% events
+    order_service -.->|"ecommerce.order.placed"| notification_service
+    order_service -.->|"ecommerce.order.status_changed"| notification_service
+
+    %% store access
+    catalog_service ---|"  inventory (read), products (read)  "| mongodb_catalog_store
+    order_service ---|"  4 collections  "| mongodb_orders_store
+    catalog_service ---|"  read, read_write  "| redis_catalog_cache_store
+
+    %% styles
+    classDef owner fill:#dbeafe,stroke:#3b82f6,color:#1e3a5f
+    classDef internal fill:#f0fdf4,stroke:#16a34a,color:#14532d
+    classDef partner fill:#fef9c3,stroke:#ca8a04,color:#713f12
+    classDef store fill:#f3f4f6,stroke:#6b7280,color:#1f2937

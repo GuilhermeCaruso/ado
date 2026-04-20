@@ -27,3 +27,4 @@ Thumbs.db
 
 # ADO — generated diagrams (optional: remove this line to commit diagrams)
 **/*.mmd
+!tools/diagram/example/*.mmd
