@@ -1,3 +1,9 @@
+# Go
+/tools/diagram/diagram
+*.exe
+*.test
+*.out
+
 # Python
 __pycache__/
 *.py[cod]

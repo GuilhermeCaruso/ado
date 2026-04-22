@@ -65,17 +65,13 @@ skills/index-service/template.yml
 
 Run the skill inside the repo. It generates an `ado.yaml` at the root.
 
-### Generate diagrams
+---
 
-```bash
-pip install -r tools/diagram/requirements.txt
+## Tools
 
-python tools/diagram/main.py --mode overview  my-domain.yaml
-python tools/diagram/main.py --mode standard  my-domain.yaml
-python tools/diagram/main.py --mode detailed  my-domain.yaml
-```
-
-Diagrams are written as `.mmd` (Mermaid) files alongside the input YAML.
+| Tool | Description |
+|------|-------------|
+| [`tools/diagram`](tools/diagram/) | Generates Mermaid diagrams (overview, standard, detailed) from a domain index YAML |
 
 ---
 

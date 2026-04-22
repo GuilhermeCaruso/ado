@@ -4,14 +4,12 @@ Generates Mermaid diagrams from an ADO domain index YAML file.
 
 ## Requirements
 
-```bash
-pip install -r requirements.txt
-```
+Go 1.22+
 
 ## Usage
 
 ```bash
-python main.py <path-to-domain.yaml> --mode <mode>
+go run . --mode <mode> <path-to-domain.yaml>
 ```
 
 | Mode | Description |
@@ -22,12 +20,19 @@ python main.py <path-to-domain.yaml> --mode <mode>
 
 Output is written as a `.mmd` file alongside the input YAML, inside a folder named after the domain.
 
+## Build
+
+```bash
+go build -o diagram .
+./diagram --mode <mode> <path-to-domain.yaml>
+```
+
 ## Example
 
 ```bash
-python main.py ../../example/domain/ecommerce.yaml --mode overview
-python main.py ../../example/domain/ecommerce.yaml --mode standard
-python main.py ../../example/domain/ecommerce.yaml --mode detailed
+go run . --mode overview  ../../example/domain/ecommerce.yaml
+go run . --mode standard  ../../example/domain/ecommerce.yaml
+go run . --mode detailed  ../../example/domain/ecommerce.yaml
 ```
 
 See [`example/`](example/) for the generated output from the ecommerce domain.
