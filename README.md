@@ -69,10 +69,10 @@ Run the skill inside the repo. It generates an `ado.yaml` at the root.
 
 ## Tools
 
-| Tool | Description |
-|------|-------------|
-| [`tools/diagram`](tools/diagram/) | Generates Mermaid diagrams (overview, standard, detailed) from a domain index YAML |
-| [`tools/ui`](tools/ui/) | Web UI to visualize Mermaid diagrams and generate service `ado.yaml` files |
+| Tool | Status | Description |
+|------|--------|-------------|
+| [`tools/diagram`](tools/diagram/) | stable | Generates Mermaid diagrams (overview, standard, detailed) from a domain index YAML |
+| [`tools/ui`](tools/ui/) | MVP | Web UI to visualize Mermaid diagrams and generate skill prompts |
 
 ---
 
@@ -109,7 +109,8 @@ ado/
 │   ├── index-domain/
 │   └── index-service/
 ├── tools/
-│   └── diagram/
+│   ├── diagram/
+│   └── ui/
 └── example/
 ```
 
@@ -118,7 +119,7 @@ ado/
 ## Roadmap
 
 - [ ] **CLI** — single binary to run skills, generate diagrams, and validate index files from the terminal
-- [ ] **UI** — web interface to fill domain/service forms, visualize diagrams, and export YAML without writing by hand
+- [x] **UI** — web interface to visualize diagrams and generate skill prompts *(MVP)*
 - [ ] **MCP server** — expose the domain index as tools (`get_service`, `find_route`, `list_dependencies`) so any MCP-compatible agent can query it at runtime
 - [ ] **GitHub Action** — automatically regenerate `ado.yaml` on push and open a PR when the index is outdated
 - [ ] **VS Code extension** — inline validation of `ado.yaml` and domain index files against the spec schemas
