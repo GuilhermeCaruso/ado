@@ -1,5 +1,6 @@
 # Go
 /tools/diagram/diagram
+/tools/ui/ui
 *.exe
 *.test
 *.out

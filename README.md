@@ -72,6 +72,7 @@ Run the skill inside the repo. It generates an `ado.yaml` at the root.
 | Tool | Description |
 |------|-------------|
 | [`tools/diagram`](tools/diagram/) | Generates Mermaid diagrams (overview, standard, detailed) from a domain index YAML |
+| [`tools/ui`](tools/ui/) | Web UI to visualize Mermaid diagrams and generate service `ado.yaml` files |
 
 ---
 

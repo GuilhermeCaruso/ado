@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ADO</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-mark">▲</span>
+        <span class="logo-text">ADO</span>
+      </div>
+      <nav class="tabs">
+        <button class="tab active" data-tab="viewer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>
+          Viewer
+        </button>
+        <button class="tab" data-tab="generator">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          Generator
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main">
+
+    <!-- ── Viewer ─────────────────────────────────────────── -->
+    <section id="viewer" class="page active">
+
+      <div class="viewer-bar">
+        <div class="viewer-bar-left">
+          <label class="btn btn-primary" for="mmd-file-input">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+            Load .mmd
+            <input id="mmd-file-input" type="file" accept=".mmd,.md" hidden />
+          </label>
+          <span id="viewer-filename" class="viewer-filename"></span>
+        </div>
+        <div id="viewer-controls" class="viewer-controls" hidden>
+          <button id="zoom-in"  class="ctrl-btn" title="Zoom in">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+          </button>
+          <button id="zoom-out" class="ctrl-btn" title="Zoom out">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+          </button>
+          <button id="zoom-fit" class="ctrl-btn" title="Fit to screen">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+          </button>
+          <div class="ctrl-divider"></div>
+          <button id="viewer-clear" class="ctrl-btn ctrl-btn-danger" title="Clear">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div id="viewer-drop-zone" class="drop-zone">
+        <div id="viewer-placeholder" class="drop-placeholder">
+          <div class="drop-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M16 12l-4-4m0 0L8 12m4-4v12"/></svg>
+          </div>
+          <p class="drop-title">Drop a <code>.mmd</code> file here</p>
+          <p class="drop-sub">or use the button above to browse</p>
+        </div>
+        <div id="viewer-output" class="viewer-output"></div>
+      </div>
+
+      <div id="viewer-error" class="alert alert-error" hidden></div>
+    </section>
+
+    <!-- ── Generator ──────────────────────────────────────── -->
+    <section id="generator" class="page">
+
+      <div class="gen-header">
+        <div>
+          <h2 class="page-title">Skill Prompt Generator</h2>
+          <p class="page-desc">Fill in the context and get a ready-to-use prompt for your AI agent.</p>
+        </div>
+      </div>
+
+      <!-- Skill selector -->
+      <div class="skill-selector">
+        <div class="skill-card active" data-skill="index-service">
+          <div class="skill-card-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          </div>
+          <div>
+            <div class="skill-card-name">index-service</div>
+            <div class="skill-card-desc">Index a single service repository</div>
+          </div>
+        </div>
+        <div class="skill-card" data-skill="index-domain">
+          <div class="skill-card-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+          </div>
+          <div>
+            <div class="skill-card-name">index-domain</div>
+            <div class="skill-card-desc">Build a full domain index across repos</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- index-service form -->
+      <form id="form-service" class="gen-form active" novalidate>
+        <div class="form-grid">
+
+          <div class="form-section">
+            <div class="form-section-title">Service</div>
+            <div class="field-row">
+              <div class="field">
+                <label>Service name <span class="req">*</span></label>
+                <input type="text" name="service" placeholder="order-service" required />
+              </div>
+              <div class="field">
+                <label>Domain <span class="req">*</span></label>
+                <input type="text" name="domain" placeholder="ecommerce" required />
+              </div>
+            </div>
+            <div class="field">
+              <label>Description <span class="req">*</span></label>
+              <textarea name="description" rows="3" placeholder="2–3 sentences: what this service does, its responsibility and main interactions." required></textarea>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="form-section-title">Classification</div>
+            <div class="field-row">
+              <div class="field">
+                <label>Ownership</label>
+                <select name="ownershipType">
+                  <option value="owner">owner</option>
+                  <option value="internal">internal</option>
+                  <option value="partner">partner</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Criticality</label>
+                <select name="criticality">
+                  <option value="high">high</option>
+                  <option value="critical">critical</option>
+                  <option value="medium">medium</option>
+                  <option value="low">low</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="form-section-title">Links <span class="optional">optional</span></div>
+            <div class="field">
+              <label>README URL</label>
+              <input type="text" name="readme" placeholder="github.com/org/repo/blob/main/README.md" />
+            </div>
+            <div class="field">
+              <label>AI_CONTEXT URL</label>
+              <input type="text" name="aiContext" placeholder="github.com/org/repo/blob/main/docs/AI_CONTEXT.md" />
+            </div>
+          </div>
+
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Generate prompt</button>
+          <button type="reset" class="btn btn-ghost">Reset</button>
+        </div>
+      </form>
+
+      <!-- index-domain form -->
+      <form id="form-domain" class="gen-form" novalidate>
+        <div class="form-grid">
+
+          <div class="form-section">
+            <div class="form-section-title">Domain</div>
+            <div class="field-row">
+              <div class="field">
+                <label>Domain name <span class="req">*</span></label>
+                <input type="text" name="domainName" placeholder="payments" required />
+              </div>
+              <div class="field">
+                <label>Business area</label>
+                <input type="text" name="businessArea" placeholder="financial-products" />
+              </div>
+            </div>
+            <div class="field">
+              <label>Description <span class="req">*</span></label>
+              <textarea name="domainDesc" rows="3" placeholder="2–4 sentences: what problem it solves, users, business value." required></textarea>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label>Slack channel</label>
+                <input type="text" name="slackChannel" placeholder="#payments-team" />
+              </div>
+              <div class="field">
+                <label>Output file name <span class="req">*</span></label>
+                <input type="text" name="outputName" placeholder="payments" required />
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="form-section-title">Team</div>
+            <div class="field-row">
+              <div class="field">
+                <label>Team name</label>
+                <input type="text" name="teamName" placeholder="Platform" />
+              </div>
+              <div class="field">
+                <label>Mission</label>
+                <input type="text" name="teamMission" placeholder="One sentence describing the team's purpose." />
+              </div>
+            </div>
+            <div class="dynamic-section">
+              <div class="dynamic-header">
+                <span class="dynamic-label">Members</span>
+                <button type="button" id="add-member" class="btn-add">+ Add member</button>
+              </div>
+              <div id="members-list" class="dynamic-list"></div>
+              <p id="members-empty" class="empty-hint">No members added.</p>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="form-section-title">Repositories</div>
+            <div class="dynamic-section">
+              <div class="dynamic-header">
+                <span class="dynamic-label">Repos to index</span>
+                <button type="button" id="add-repo" class="btn-add">+ Add repo</button>
+              </div>
+              <div id="repos-list" class="dynamic-list"></div>
+              <p id="repos-empty" class="empty-hint">No repositories added.</p>
+            </div>
+          </div>
+
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Generate prompt</button>
+          <button type="reset" class="btn btn-ghost">Reset</button>
+        </div>
+      </form>
+
+      <!-- Prompt output -->
+      <div id="gen-output" class="prompt-output" hidden>
+        <div class="prompt-output-bar">
+          <div class="prompt-output-label">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+            Prompt
+          </div>
+          <button id="gen-copy" class="btn btn-ghost btn-sm">Copy</button>
+        </div>
+        <pre id="gen-code" class="prompt-code"></pre>
+      </div>
+
+    </section>
+
+  </main>
+
+  <script src="/js/app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.2/dist/svg-pan-zoom.min.js"></script>
+  <script type="module" src="/js/viewer.js"></script>
+  <script src="/js/generator.js"></script>
+</body>
+</html>
